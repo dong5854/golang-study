@@ -2,19 +2,21 @@ package main
 
 import (
 	"fmt"
-	"github.com/dong5854/learngo/accounts"
+	"github.com/dong5854/learngo/mydict"
 )
 
 func main() {
-	account := accounts.NewAccount("dong")
-	account.Deposit(10)
-	fmt.Println(account.Balance())
-	err := account.Withdraw(20)
+	dictionary := mydict.Dictionary{}
+	baseWord := "hello"
+	dictionary.Add(baseWord, "Greeting")
+	err := dictionary.Update(baseWord, "Second")
 	if err != nil {
-		//log.Fatalln(err)
 		fmt.Println(err)
 	}
-	account.ChangeOwner("lee")
-	fmt.Println(account.Balance(), account.Owner())
-	fmt.Println(account)
+	dictionary.Delete(baseWord)
+	word, err2 := dictionary.Search(baseWord)
+	if err2 != nil {
+		fmt.Println(err2)
+	}
+	fmt.Println(word)
 }
