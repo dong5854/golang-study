@@ -1,25 +1,48 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"time"
+	"net/http"
 )
 
+type requestResult struct {
+	url    string
+	status string
+}
+
+var errRequestFailed = errors.New("requests failed")
+
 func main() {
-	channel := make(chan string)
-	people := [2]string{"dong", "chae"}
-	for _, person := range people {
-		go smartCount(person, channel)
+	results := make(map[string]string)
+	c := make(chan requestResult)
+	urls := []string{
+		"https://www.airbnb.com/",
+		"https://www.google.com/",
+		"https://www.amazon.com/",
+		"https://www.soundcloud.com/",
+		"https://www.facebook.com/",
+		"https://www.instagram.com/",
+		"https://academy.nomadcoders.co/",
 	}
-	for i := 0; i < len(people); i++ {
-		fmt.Println(<-channel)
+	for _, url := range urls {
+		go hitURL(url, c)
+	}
+	for i := 0; i < len(urls); i++ {
+		result := <-c
+		results[result.url] = result.status
+	}
+	for url, status := range results {
+		fmt.Println(url, status)
 	}
 }
 
-func smartCount(person string, channel chan string) {
-	for i := 0; i < 5; i++ {
-		fmt.Println(person, "is smart", i)
-		time.Sleep(time.Second)
+func hitURL(url string, c chan<- requestResult) {
+	fmt.Println("Checking:", url)
+	resp, err := http.Get(url)
+	status := "OK"
+	if err != nil || resp.StatusCode >= 400 {
+		status = "FAILED"
 	}
-	channel <- person + " is smart!"
+	c <- requestResult{url: url, status: status}
 }
