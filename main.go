@@ -1,42 +1,25 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"net/http"
+	"time"
 )
 
-var errRequestFailed = errors.New("requests failed")
-
 func main() {
-	var results = make(map[string]string)
-	urls := []string{
-		"https://www.airbnb.com/",
-		"https://www.google.com/",
-		"https://www.amazon.com/",
-		"https://www.soundcloud.com/",
-		"https://www.facebook.com/",
-		"https://www.instagram.com/",
-		"https://academy.nomadcoders.co/",
+	channel := make(chan string)
+	people := [2]string{"dong", "chae"}
+	for _, person := range people {
+		go smartCount(person, channel)
 	}
-	for _, url := range urls {
-		result := "OK"
-		err := hitURL(url)
-		if err != nil {
-			result = "FAILED"
-		}
-		results[url] = result
-	}
-	for url, result := range results {
-		fmt.Println(url, result)
+	for i := 0; i < len(people); i++ {
+		fmt.Println(<-channel)
 	}
 }
 
-func hitURL(url string) error {
-	fmt.Println("Checking:", url)
-	resp, err := http.Get(url)
-	if err != nil || resp.StatusCode >= 400 {
-		return errRequestFailed
+func smartCount(person string, channel chan string) {
+	for i := 0; i < 5; i++ {
+		fmt.Println(person, "is smart", i)
+		time.Sleep(time.Second)
 	}
-	return nil
+	channel <- person + " is smart!"
 }
