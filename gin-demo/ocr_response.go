@@ -15,6 +15,3 @@ type ocrResponse struct {
 	}
 	TransactionId string `json:"transaction_id"`
 }
-
-type ocrData struct {
-}
