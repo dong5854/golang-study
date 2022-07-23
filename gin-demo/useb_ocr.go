@@ -2,13 +2,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"io"
 	"io/ioutil"
 	"log"
-	"mime/multipart"
 	"net/http"
 )
 
@@ -60,30 +59,40 @@ func usebIdcard(token string, requestBody *ocrRequest) ([]byte, error) {
 		}
 		defer file.Close()
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-		part, _ := writer.CreateFormFile("image", requestBody.File.Filename)
-		_, cpyErr := io.Copy(part, file)
-		if cpyErr != nil {
-			log.Fatalln(cpyErr)
-		}
-		writer.Close()
+		//테스트용 저장
+		//out, CreateErr := os.Create(filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
+		//if CreateErr != nil {
+		//	fmt.Println(CreateErr)
+		//}
+		//defer out.Close()
+		//_, copyErr := io.Copy(out, file)
+		//if copyErr != nil {
+		//	println(copyErr)
+		//}
+		//테스트용 저장
 
-		fmt.Println("MULTIPART 요청", requestBody.File.Filename, writer.FormDataContentType())
+		//localFile, fileErr := os.Open(filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
+		//if fileErr != nil {
+		//	fmt.Println(fileErr)
+		//}
+		//fileData, err := ioutil.ReadAll(localFile)
 
-		req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", body)
-		req.Header.Add("Content-Type", writer.FormDataContentType())
-	} else { // json 으로 받은 경우
-		ocrRequestJSON, err := json.Marshal(requestBody)
+		fileData, err := ioutil.ReadAll(file)
 		if err != nil {
-			log.Fatalln(err)
+			fmt.Println(err)
 		}
-		fmt.Println("JSON 요청")
-		req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", bytes.NewBuffer(ocrRequestJSON))
-		req.Header.Add("Content-Type", "application/json")
-		if err != nil {
-			log.Fatalln(err)
-		}
+		imgBase64Str := base64.StdEncoding.EncodeToString(fileData)
+		requestBody.ImageBase64 = imgBase64Str
+	}
+
+	ocrRequestJSON, err := json.Marshal(requestBody)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", bytes.NewBuffer(ocrRequestJSON))
+	req.Header.Add("Content-Type", "application/json")
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	req.Header.Add("Authorization", bearer)
