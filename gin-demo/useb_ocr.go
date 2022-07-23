@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
+	"io"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 func usebOcr(c *gin.Context) {
@@ -27,7 +28,13 @@ func usebOcr(c *gin.Context) {
 		}
 	}
 
-	resp, err := usebIdcard(bearerToken, requestBody)
+	//saveErr := c.SaveUploadedFile(requestBody.File, filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
+	//
+	//if saveErr != nil {
+	//	println("저장 에러", saveErr.Error())
+	//}
+
+	resp, err := usebIdcard(bearerToken, &requestBody)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -41,33 +48,45 @@ func usebOcr(c *gin.Context) {
 	c.JSON(http.StatusOK, responseObj)
 }
 
-func usebIdcard(token string, requestBody ocrRequest) ([]byte, error) {
+func usebIdcard(token string, requestBody *ocrRequest) ([]byte, error) {
 	baseUrl := "https://api3.useb.co.kr/"
 	bearer := "Bearer " + token
 	var req *http.Request
 
-	if requestBody.File != nil {
+	if requestBody.File != nil { // multipart-form 으로 받을 경우
 		file, err := requestBody.File.Open()
 		if err != nil {
 			log.Fatalln(err)
 		}
 		defer file.Close()
-		fmt.Println(file)
-		//여기 작업 multipart_form
-	} else {
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		part, _ := writer.CreateFormFile("image", requestBody.File.Filename)
+		_, cpyErr := io.Copy(part, file)
+		if cpyErr != nil {
+			log.Fatalln(cpyErr)
+		}
+		writer.Close()
+
+		fmt.Println("MULTIPART 요청", requestBody.File.Filename, writer.FormDataContentType())
+
+		req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", body)
+		req.Header.Add("Content-Type", writer.FormDataContentType())
+	} else { // json 으로 받은 경우
 		ocrRequestJSON, err := json.Marshal(requestBody)
 		if err != nil {
 			log.Fatalln(err)
 		}
-
+		fmt.Println("JSON 요청")
 		req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", bytes.NewBuffer(ocrRequestJSON))
+		req.Header.Add("Content-Type", "application/json")
 		if err != nil {
 			log.Fatalln(err)
 		}
 	}
-	req.Header.Add("Authorization", bearer)
-	req.Header.Add("Content-Type", "application/json")
 
+	req.Header.Add("Authorization", bearer)
 	client := &http.Client{}
 
 	resp, err := client.Do(req)
