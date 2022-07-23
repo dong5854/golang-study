@@ -27,12 +27,6 @@ func usebOcr(c *gin.Context) {
 		}
 	}
 
-	//saveErr := c.SaveUploadedFile(requestBody.File, filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
-	//
-	//if saveErr != nil {
-	//	println("저장 에러", saveErr.Error())
-	//}
-
 	resp, err := usebIdcard(bearerToken, &requestBody)
 	if err != nil {
 		fmt.Println(err)
@@ -58,24 +52,6 @@ func usebIdcard(token string, requestBody *ocrRequest) ([]byte, error) {
 			log.Fatalln(err)
 		}
 		defer file.Close()
-
-		//테스트용 저장
-		//out, CreateErr := os.Create(filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
-		//if CreateErr != nil {
-		//	fmt.Println(CreateErr)
-		//}
-		//defer out.Close()
-		//_, copyErr := io.Copy(out, file)
-		//if copyErr != nil {
-		//	println(copyErr)
-		//}
-		//테스트용 저장
-
-		//localFile, fileErr := os.Open(filepath.Join("/Users/dong/test-files", requestBody.File.Filename))
-		//if fileErr != nil {
-		//	fmt.Println(fileErr)
-		//}
-		//fileData, err := ioutil.ReadAll(localFile)
 
 		fileData, err := ioutil.ReadAll(file)
 		if err != nil {
