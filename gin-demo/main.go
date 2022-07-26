@@ -8,7 +8,7 @@ func main() {
 
 	r := gin.Default()
 
-	r.POST("/ocr/idcard-driver", usebOcr)
+	r.POST("/ocr/idcard-driver", OcrApi)
 
 	r.Run(":8082")
 }
