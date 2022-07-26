@@ -30,11 +30,11 @@ func usebIdcard(token string, requestBody *ocrRequest) ([]byte, error) {
 		requestBody.ImageBase64 = imgBase64Str
 	}
 
-	ocrRequestJSON, err := json.Marshal(requestBody)
+	ocrRequestBytes, err := json.Marshal(requestBody)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", bytes.NewBuffer(ocrRequestJSON))
+	req, err = http.NewRequest("POST", baseUrl+"ocr/idcard-driver", bytes.NewBuffer(ocrRequestBytes))
 	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
 		log.Fatalln(err)
