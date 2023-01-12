@@ -59,7 +59,7 @@ slice: [1 2 200 4 5]
 ```
 결과를 보면 slice의 3 번째 값은 200으로 바뀌었는데 changeArray()의 인수로 사용한 array 배열의 3번째 값이 바뀌지 않는다. 이런 현상이 일어가는 이유는 배열과 슬라이스의 구조가 서로 다르기 때문이다.
 
-## 동작 차지의 원인
+## 동작 차이의 원인
 
 Go 언어에서 모든 값의 대입은 복사로 일어난다. 함수에 인수로 전달될 때와 다른 변수에 대입할 때 값의 이동은 복사로 일어난다. 복사는 타입의 값이 복사되는데, 포인터는 포인터의 값인 메모리 주소가 복사되고, 구조체가 복사될 때는 구조체의 모든 필드가 복사된다. 배열은 배열의 모든 값이 복사된다.
 
@@ -70,4 +70,35 @@ Go 언어에서 모든 값의 대입은 복사로 일어난다. 함수에 인수
 복사된 것은 메모리 주소값이기 떄문에 slice와 slice2는 같은 배열 데이터를 가리키기 때문에, slice2의 세 번째 요솟값을 바꿔도 slice 또한 같은 배열을 가리키기 때문에 slice[2] 값 또한 바뀌게 된다.
 
 ## append()를 사용할 때 발생하는 예기치 못한 문제1
-작성 에정
+append 함수의 동작을 알아보자, append() 함수가 호출되면 먼저 슬라이스에 값을 추가할 수 있는 빈 공간이 있는지 확인한다. 남은 빈 공간은 실제 배열의 cap 에서 슬라이스 요소 개수 len 을 뺀 값이다.
+```
+남은 빈 공간 = cap - len
+```
+남은 빈 공간의 개수가 추가하는 값의 개수보다 크거나 같은 경우 배열 뒷부분에 값을 추가한 뒤 len 값을 증가시킨다.
+```go
+package main
+
+import "fmt"
+
+func main() {
+	slice1 := make([]int, 3, 5) // len:3 cap:5 슬라이스를 만든다
+
+	slice2 := append(slice1, 4, 5)
+	// cap() 함수를 이용해 슬라이스 capacity 값을 알 수 있다.
+	fmt.Println("slice1:", slice1, len(slice1), cap(slice1))
+	fmt.Println("slice2:", slice2, len(slice2), cap(slice2))
+
+	slice1[1] = 100 // slice2까지 바뀝니다.
+
+	fmt.Println("After change second element")
+	fmt.Println("slice1:", slice1, len(slice1), cap(slice1))
+	fmt.Println("slice2:", slice2, len(slice2), cap(slice2))
+
+	slice1 = append(slice1, 500) // 역시 slice2까지 바뀝니다.
+
+	fmt.Println("After append 500")
+	fmt.Println("slice1:", slice1, len(slice1), cap(slice1))
+	fmt.Println("slice2:", slice2, len(slice2), cap(slice2))
+}
+```
+위의 코드를 통해 slice1과 slice2는 같은 배열을 가리키는 것을 알 수 있다.
